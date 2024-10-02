@@ -11,6 +11,7 @@ import ScrollableChat from './ScrollableChat'
 import io from 'socket.io-client'
 import Lottie from 'react-lottie'
 import animationData from '../animations/TypingAnimation.json'
+import messageSound from '../assests/sounds/messages.wav'
 
 const ENDPOINT = 'http://localhost:5500'
 var socket, selectedChatCompare
@@ -23,7 +24,7 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     const [typing, setTyping] = useState(false)
     const [isTyping, setIsTyping] = useState(false)
 
-    const { user, selectedChat, setSelectedChat } = ChatState()
+    const { user, selectedChat, setSelectedChat, notification, setNotification } = ChatState()
 
     const toast = useToast()
 
@@ -83,12 +84,18 @@ const SingleChat = ({ fetchAgain, setFetchAgain }) => {
     useEffect(() => {
         socket.on('message received', (newMessageReceived) => {
             if (!selectedChatCompare || selectedChatCompare._id !== newMessageReceived.chat._id) {
-                // give notification
+                if (!notification.includes(newMessageReceived)) {
+                    setNotification([newMessageReceived, ...notification])
+                    setFetchAgain(!fetchAgain)
+                    const sound = new Audio(messageSound);
+                    sound.play();
+                }
             } else {
                 setMessages([...messages, newMessageReceived])
             }
         })
     })
+
 
     const sendMessage = async (event) => {
         if (event.key === 'Enter' && newMessage) {
